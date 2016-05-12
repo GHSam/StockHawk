@@ -4,13 +4,11 @@ package com.sam_chordas.android.stockhawk.ui;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 
-import com.afollestad.materialdialogs.Theme;
 import com.db.chart.model.ChartEntry;
 import com.db.chart.model.LineSet;
 import com.db.chart.view.AxisController;
