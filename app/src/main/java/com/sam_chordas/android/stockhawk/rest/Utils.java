@@ -1,10 +1,20 @@
 package com.sam_chordas.android.stockhawk.rest;
 
 import android.content.ContentProviderOperation;
+import android.net.Uri;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,6 +28,66 @@ public class Utils {
   private static String LOG_TAG = Utils.class.getSimpleName();
 
   public static boolean showPercent = true;
+
+  public static String fetchData(String url) throws IOException {
+    OkHttpClient client = new OkHttpClient();
+
+    Request request = new Request.Builder()
+            .url(url)
+            .build();
+
+    Response response = client.newCall(request).execute();
+    return response.body().string();
+  }
+
+  public static ArrayList<Pair<String, Float>> fetchStockHistory(String symbol) {
+    ArrayList<Pair<String, Float>> history = new ArrayList<>();
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(new Date());
+    calendar.add(Calendar.MONTH, -1);
+
+    String startDate = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+    String endDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+
+    String query = "select * from yahoo.finance.historicaldata " +
+            "where  symbol    = \"" + symbol + "\"" +
+            "and    startDate = \"" + startDate + "\"" +
+            "and    endDate   = \"" + endDate + "\"";
+
+    String url = Uri.parse("http://query.yahooapis.com/v1/public/yql")
+            .buildUpon()
+            .appendQueryParameter("q", query)
+            .appendQueryParameter("format", "json")
+            .appendQueryParameter("diagnostics", "true")
+            .appendQueryParameter("env", "store://datatables.org/alltableswithkeys")
+            .appendQueryParameter("callback", "")
+            .build()
+            .toString();
+
+    try {
+      JSONObject jsonObject = new JSONObject(fetchData(url));
+      JSONArray quotes = jsonObject.getJSONObject("query")
+              .getJSONObject("results")
+              .getJSONArray("quote");
+
+      for (int i = 0; i < quotes.length(); i++) {
+        JSONObject quote = quotes.getJSONObject(i);
+
+        String date = quote.getString("Date");
+        Float value = Float.parseFloat(quote.getString("Close"));
+
+        history.add(new Pair<>(date, value));
+      }
+
+    } catch (JSONException e){
+      Log.e(LOG_TAG, "Parsing JSON failed: " + e);
+    } catch (IOException e){
+      Log.e(LOG_TAG, "Fetching URL failed: " + e);
+    }
+
+    return history;
+  }
 
   public static ArrayList quoteJsonToContentVals(String JSON){
     ArrayList<ContentProviderOperation> batchOperations = new ArrayList<>();

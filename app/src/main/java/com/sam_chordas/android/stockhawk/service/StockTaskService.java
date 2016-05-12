@@ -28,7 +28,6 @@ import java.net.URLEncoder;
 public class StockTaskService extends GcmTaskService{
   private String LOG_TAG = StockTaskService.class.getSimpleName();
 
-  private OkHttpClient client = new OkHttpClient();
   private Context mContext;
   private StringBuilder mStoredSymbols = new StringBuilder();
   private boolean isUpdate;
@@ -37,14 +36,6 @@ public class StockTaskService extends GcmTaskService{
 
   public StockTaskService(Context context){
     mContext = context;
-  }
-  String fetchData(String url) throws IOException{
-    Request request = new Request.Builder()
-        .url(url)
-        .build();
-
-    Response response = client.newCall(request).execute();
-    return response.body().string();
   }
 
   @Override
@@ -111,7 +102,7 @@ public class StockTaskService extends GcmTaskService{
     if (urlStringBuilder != null){
       urlString = urlStringBuilder.toString();
       try{
-        getResponse = fetchData(urlString);
+        getResponse = Utils.fetchData(urlString);
         result = GcmNetworkManager.RESULT_SUCCESS;
         try {
           ContentValues contentValues = new ContentValues();
