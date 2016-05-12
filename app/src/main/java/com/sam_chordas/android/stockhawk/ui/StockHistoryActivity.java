@@ -36,11 +36,7 @@ public class StockHistoryActivity extends AppCompatActivity {
             return dataset;
         }
 
-        @Override
-        protected void onPostExecute(LineSet dataset) {
-            LineChartView chart = (LineChartView) findViewById(R.id.linechart);
-            View progressBar = findViewById(R.id.loading_bar);
-
+        private void setChartBounds(LineChartView chart, LineSet dataset) {
             int min = Integer.MAX_VALUE;
             int max = Integer.MIN_VALUE;
 
@@ -54,16 +50,29 @@ public class StockHistoryActivity extends AppCompatActivity {
                 }
             }
 
+            chart.setAxisBorderValues(min, max);
+            chart.setStep(Math.max((max - min) / 10, 1));
+        }
+
+        @Override
+        protected void onPostExecute(LineSet dataset) {
+            findViewById(R.id.loading_bar).setVisibility(View.GONE);
+
+            if (dataset.size() == 0) {
+                findViewById(R.id.network_message).setVisibility(View.VISIBLE);
+                return;
+            }
+
+            LineChartView chart = (LineChartView) findViewById(R.id.linechart);
+
+            setChartBounds(chart, dataset);
+
             dataset.setColor(getResources().getColor(R.color.material_blue_500));
 
             chart.addData(dataset);
             chart.setXLabels(AxisController.LabelPosition.NONE);
             chart.setLabelsColor(getResources().getColor(android.R.color.secondary_text_dark));
-            chart.setAxisBorderValues(min, max);
-            chart.setStep(Math.max((max - min) / 10, 1));
             chart.show();
-
-            progressBar.setVisibility(View.GONE);
             chart.setVisibility(View.VISIBLE);
         }
     }

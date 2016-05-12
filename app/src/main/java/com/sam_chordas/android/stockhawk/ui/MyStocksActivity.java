@@ -57,6 +57,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mContext = this;
+
     ConnectivityManager cm =
         (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -72,10 +73,9 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
       mServiceIntent.putExtra("tag", "init");
       if (isConnected){
         startService(mServiceIntent);
-      } else{
-        networkToast();
       }
     }
+
     RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
     recyclerView.setLayoutManager(new LinearLayoutManager(this));
     getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
@@ -95,41 +95,39 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
             }));
     recyclerView.setAdapter(mCursorAdapter);
 
-
     FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
     fab.attachToRecyclerView(recyclerView);
     fab.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        if (isConnected){
-          new MaterialDialog.Builder(mContext).title(R.string.symbol_search)
-              .content(R.string.content_test)
-              .inputType(InputType.TYPE_CLASS_TEXT)
-              .input(R.string.input_hint, R.string.input_prefill, new MaterialDialog.InputCallback() {
-                @Override public void onInput(MaterialDialog dialog, CharSequence input) {
-                  // On FAB click, receive user input. Make sure the stock doesn't already exist
-                  // in the DB and proceed accordingly
-                  Cursor c = getContentResolver().query(QuoteProvider.Quotes.CONTENT_URI,
-                      new String[] { QuoteColumns.SYMBOL }, QuoteColumns.SYMBOL + "= ?",
-                      new String[] { input.toString() }, null);
-                  if (c.getCount() != 0) {
-                    Toast toast = Toast.makeText(MyStocksActivity.this, R.string.stock_exists,
-                            Toast.LENGTH_LONG);
-                    toast.setGravity(Gravity.CENTER, Gravity.CENTER, 0);
-                    toast.show();
-                    return;
-                  } else {
-                    // Add the stock to DB
-                    mServiceIntent.putExtra("tag", "add");
-                    mServiceIntent.putExtra("symbol", input.toString());
-                    startService(mServiceIntent);
-                  }
-                }
-              })
-              .show();
-        } else {
+        if (!isConnected) {
           networkToast();
+          return;
         }
 
+        new MaterialDialog.Builder(mContext).title(R.string.symbol_search)
+            .content(R.string.content_test)
+            .inputType(InputType.TYPE_CLASS_TEXT)
+            .input(R.string.input_hint, R.string.input_prefill, new MaterialDialog.InputCallback() {
+              @Override public void onInput(MaterialDialog dialog, CharSequence input) {
+                // On FAB click, receive user input. Make sure the stock doesn't already exist
+                // in the DB and proceed accordingly
+                Cursor c = getContentResolver().query(QuoteProvider.Quotes.CONTENT_URI,
+                    new String[] { QuoteColumns.SYMBOL }, QuoteColumns.SYMBOL + "= ?",
+                    new String[] { input.toString() }, null);
+
+                if (c.getCount() != 0) {
+                  Toast toast = Toast.makeText(MyStocksActivity.this, R.string.stock_exists,
+                          Toast.LENGTH_LONG);
+                  toast.setGravity(Gravity.CENTER, Gravity.CENTER, 0);
+                  toast.show();
+                } else {
+                  // Add the stock to DB
+                  mServiceIntent.putExtra("tag", "add");
+                  mServiceIntent.putExtra("symbol", input.toString());
+                  startService(mServiceIntent);
+                }
+              }
+            }).show();
       }
     });
 
@@ -220,6 +218,14 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   public void onLoadFinished(Loader<Cursor> loader, Cursor data){
     mCursorAdapter.swapCursor(data);
     mCursor = data;
+
+    if (isConnected) {
+      findViewById(R.id.network_message).setVisibility(View.GONE);
+      findViewById(R.id.recycler_view).setVisibility(View.VISIBLE);
+    } else {
+      findViewById(R.id.network_message).setVisibility(View.VISIBLE);
+      findViewById(R.id.recycler_view).setVisibility(View.GONE);
+    }
   }
 
   @Override

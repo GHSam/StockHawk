@@ -9,7 +9,9 @@
   <string name="content_test">Search for a Stock Symbol</string>
   <string name="input_hint" translatable="false">FB</string>
   <string name="input_prefill" translatable="false"></string>
-  <string name="network_toast">Uh-oh! This app requires an internet connection</string>
+  <string name="network_toast">An internet connection is required to add stocks</string>
+  <string name="network_message">Uh-oh! This app requires an internet connection</string>
   <string name="stock_exists">This stock is already saved!</string>
   <string name="stock_chart_label">Stock value over past month</string>
+  <string name="history_network">An internet connection is required to view stock history</string>
 </resources>
