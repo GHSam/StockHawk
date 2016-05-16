@@ -15,4 +15,5 @@
   <string name="stock_chart_label">Stock value over past month</string>
   <string name="history_network">An internet connection is required to view stock history</string>
   <string name="fab_add_description">Add new stock</string>
+  <string name="widget_empty">There are no stocks to display</string>
 </resources>
