@@ -40,11 +40,6 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   /**
    * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
    */
-
-  /**
-   * Used to store the last screen title. For use in {@link #restoreActionBar()}.
-   */
-  private CharSequence mTitle;
   private Intent mServiceIntent;
   private ItemTouchHelper mItemTouchHelper;
   private static final int CURSOR_LOADER_ID = 0;
@@ -109,11 +104,13 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
             .inputType(InputType.TYPE_CLASS_TEXT)
             .input(R.string.input_hint, R.string.input_prefill, new MaterialDialog.InputCallback() {
               @Override public void onInput(MaterialDialog dialog, CharSequence input) {
+                String symbol = input.toString().toUpperCase();
+
                 // On FAB click, receive user input. Make sure the stock doesn't already exist
                 // in the DB and proceed accordingly
                 Cursor c = getContentResolver().query(QuoteProvider.Quotes.CONTENT_URI,
                     new String[] { QuoteColumns.SYMBOL }, QuoteColumns.SYMBOL + "= ?",
-                    new String[] { input.toString() }, null);
+                    new String[] { symbol }, null);
 
                 if (c.getCount() != 0) {
                   Toast toast = Toast.makeText(MyStocksActivity.this, R.string.stock_exists,
@@ -123,7 +120,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
                 } else {
                   // Add the stock to DB
                   mServiceIntent.putExtra("tag", "add");
-                  mServiceIntent.putExtra("symbol", input.toString());
+                  mServiceIntent.putExtra("symbol", symbol);
                   startService(mServiceIntent);
                 }
               }
@@ -135,7 +132,6 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     mItemTouchHelper = new ItemTouchHelper(callback);
     mItemTouchHelper.attachToRecyclerView(recyclerView);
 
-    mTitle = getTitle();
     if (isConnected){
       long period = 3600L;
       long flex = 10L;
@@ -168,17 +164,9 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     Toast.makeText(mContext, getString(R.string.network_toast), Toast.LENGTH_SHORT).show();
   }
 
-  public void restoreActionBar() {
-    ActionBar actionBar = getSupportActionBar();
-    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-    actionBar.setDisplayShowTitleEnabled(true);
-    actionBar.setTitle(mTitle);
-  }
-
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       getMenuInflater().inflate(R.menu.my_stocks, menu);
-      restoreActionBar();
       return true;
   }
 
