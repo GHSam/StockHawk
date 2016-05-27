@@ -3,6 +3,7 @@ package com.sam_chordas.android.stockhawk.widget;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -15,6 +16,19 @@ import com.sam_chordas.android.stockhawk.ui.StockHistoryActivity;
  * Created by sam on 13/05/16.
  */
 public class StockWidgetProvider extends AppWidgetProvider {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        super.onReceive(context, intent);
+
+        if (intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_UPDATE)) {
+            AppWidgetManager widgetManager = AppWidgetManager.getInstance(context);
+            ComponentName componentName = new ComponentName(context, StockWidgetProvider.class);
+            int[] appWidgetIds = widgetManager.getAppWidgetIds(componentName);
+
+            widgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.stocks_list);
+        }
+    }
+
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         super.onUpdate(context, appWidgetManager, appWidgetIds);
@@ -35,4 +49,6 @@ public class StockWidgetProvider extends AppWidgetProvider {
             appWidgetManager.updateAppWidget(appWidgetId, rv);
         }
     }
+
+
 }
