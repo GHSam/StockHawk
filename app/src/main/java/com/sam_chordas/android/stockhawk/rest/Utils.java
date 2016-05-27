@@ -55,7 +55,7 @@ public class Utils {
             "and    startDate = \"" + startDate + "\"" +
             "and    endDate   = \"" + endDate + "\"";
 
-    String url = Uri.parse("http://query.yahooapis.com/v1/public/yql")
+    String url = Uri.parse("https://query.yahooapis.com/v1/public/yql")
             .buildUpon()
             .appendQueryParameter("q", query)
             .appendQueryParameter("format", "json")
@@ -80,9 +80,9 @@ public class Utils {
         history.add(new Pair<>(date, value));
       }
 
-    } catch (JSONException e){
+    } catch (JSONException e) {
       Log.e(LOG_TAG, "Parsing JSON failed: " + e);
-    } catch (IOException e){
+    } catch (IOException e) {
       Log.e(LOG_TAG, "Fetching URL failed: " + e);
     }
 
@@ -149,33 +149,36 @@ public class Utils {
     return change;
   }
 
-  public static ContentProviderOperation buildBatchOperation(JSONObject jsonObject){
-    ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(
-        QuoteProvider.Quotes.CONTENT_URI);
+  public static ContentProviderOperation buildBatchOperation(JSONObject jsonObject) {
     try {
+      ContentProviderOperation.Builder builder = ContentProviderOperation.newInsert(
+              QuoteProvider.Quotes.CONTENT_URI);
+
       String change = jsonObject.getString("Change");
+      String changeInPercent = jsonObject.getString("ChangeinPercent");
+      String bid = jsonObject.getString("Bid");
 
       // Skip invalid stock results
-      if (change.equals("null")) {
+      if (change.equals("null") || changeInPercent.equals("null") || bid.equals("null")) {
         return null;
       }
 
       builder.withValue(QuoteColumns.SYMBOL, jsonObject.getString("symbol"));
-      builder.withValue(QuoteColumns.BIDPRICE, truncateBidPrice(jsonObject.getString("Bid")));
-      builder.withValue(QuoteColumns.PERCENT_CHANGE, truncateChange(
-          jsonObject.getString("ChangeinPercent"), true));
+      builder.withValue(QuoteColumns.BIDPRICE, truncateBidPrice(bid));
+      builder.withValue(QuoteColumns.PERCENT_CHANGE, truncateChange(changeInPercent, true));
       builder.withValue(QuoteColumns.CHANGE, truncateChange(change, false));
       builder.withValue(QuoteColumns.ISCURRENT, 1);
 
-      if (change.charAt(0) == '-'){
+      if (change.charAt(0) == '-') {
         builder.withValue(QuoteColumns.ISUP, 0);
-      }else{
+      } else {
         builder.withValue(QuoteColumns.ISUP, 1);
       }
 
-    } catch (JSONException e){
+      return builder.build();
+    } catch (JSONException e) {
       e.printStackTrace();
+      return null;
     }
-    return builder.build();
   }
 }
