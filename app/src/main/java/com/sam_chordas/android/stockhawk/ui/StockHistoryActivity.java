@@ -9,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 
-import com.db.chart.model.ChartEntry;
 import com.db.chart.model.LineSet;
 import com.db.chart.view.AxisController;
 import com.db.chart.view.LineChartView;
@@ -21,54 +20,37 @@ import java.util.ArrayList;
 
 
 public class StockHistoryActivity extends AppCompatActivity {
-    private class FetchStockHistory extends AsyncTask<String, Void, LineSet> {
+    private class FetchStockHistory extends AsyncTask<String, Void, ArrayList<Pair<String, Float>>> {
         @Override
-        protected LineSet doInBackground(String... strings) {
-            String symbol = strings[0];
-
-            ArrayList<Pair<String, Float>> history = Utils.fetchStockHistory(symbol);
-            LineSet dataset = new LineSet();
-
-            for (Pair<String, Float> stock : history) {
-                dataset.addPoint(stock.first, stock.second);
-            }
-
-            return dataset;
-        }
-
-        private void setChartBounds(LineChartView chart, LineSet dataset) {
-            int min = Integer.MAX_VALUE;
-            int max = Integer.MIN_VALUE;
-
-            for (ChartEntry ce : dataset.getEntries()) {
-                if (ce.getValue() < min) {
-                    min = (int)ce.getValue();
-                }
-
-                if (ce.getValue() > max) {
-                    max = (int)Math.ceil(ce.getValue());
-                }
-            }
-
-            chart.setAxisBorderValues(min, max);
-            chart.setStep(Math.max((max - min) / 10, 1));
+        protected ArrayList<Pair<String, Float>> doInBackground(String... strings) {
+            return Utils.fetchStockHistory(strings[0]);
         }
 
         @Override
-        protected void onPostExecute(LineSet dataset) {
+        protected void onPostExecute(ArrayList<Pair<String, Float>> history) {
             findViewById(R.id.loading_bar).setVisibility(View.GONE);
 
-            if (dataset.size() == 0) {
+            if (history.size() == 0) {
                 findViewById(R.id.network_message).setVisibility(View.VISIBLE);
                 return;
             }
 
+            LineSet dataset = new LineSet();
             LineChartView chart = (LineChartView) findViewById(R.id.linechart);
+            int min = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
 
-            setChartBounds(chart, dataset);
+            for (Pair<String, Float> stock : history) {
+                dataset.addPoint(stock.first, stock.second);
+
+                min = Math.min(min, (int) Math.floor(stock.second));
+                max = Math.max(max, (int) Math.ceil(stock.second));
+            }
 
             dataset.setColor(getResources().getColor(R.color.material_blue_500));
 
+            chart.setAxisBorderValues(min, max);
+            chart.setStep(Math.max((max - min) / 10, 1));
             chart.addData(dataset);
             chart.setXLabels(AxisController.LabelPosition.NONE);
             chart.setLabelsColor(getResources().getColor(android.R.color.secondary_text_dark));
